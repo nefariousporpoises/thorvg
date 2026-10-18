@@ -357,7 +357,18 @@ bool SwRenderer::postRender()
 {
     //Unmultiply alpha if needed
     if (surface->cs == ColorSpace::ABGR8888S || surface->cs == ColorSpace::ARGB8888S) {
-        rasterUnpremultiplySurface(surface);
+        // Pixels outside the dirty partitions are already straight-alpha.
+        // Unpremultiplying them again would brighten unchanged translucent content.
+        if (fulldraw || dirtyRegion.deactivated()) rasterUnpremultiplySurface(surface);
+        else {
+            for (int idx = 0; idx < RenderDirtyRegion::PARTITIONING; ++idx) {
+                ARRAY_FOREACH(p, dirtyRegion.get(idx))
+                {
+                    rasterUnpremultiplySurface(surface, p->x(), p->y(), p->w(), p->h());
+                }
+            }
+            surface->premultiplied = false;
+        }
     }
 
     rendered = true;
