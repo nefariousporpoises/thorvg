@@ -23,6 +23,7 @@ test_file = [
     'testShape.cpp',
     'testSwCanvas.cpp',
     'testSwEngine.cpp',
+    'testPartialAlpha.cpp',
     'testText.cpp'
 ]
 

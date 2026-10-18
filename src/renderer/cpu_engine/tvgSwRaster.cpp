@@ -1300,16 +1300,25 @@ bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_
     return true;
 }
 
-void rasterUnpremultiplySurface(RenderSurface* surface)
+void rasterUnpremultiplySurface(RenderSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 {
     if (surface->channelSize != sizeof(uint32_t)) return;
+    if (x >= surface->w || y >= surface->h) return;
+    w = std::min(w, surface->w - x);
+    h = std::min(h, surface->h - y);
+    if (w == 0 || h == 0) return;
 
-    TVGLOG("SW_ENGINE", "Unpremultiply [Size: %d x %d]", surface->w, surface->h);
+    TVGLOG("SW_ENGINE", "Unpremultiply [Region: %u %u %u x %u]", x, y, w, h);
 
-    #pragma omp parallel for
-    for (int32_t y = 0; y < (int32_t)surface->h; y++) {
-        rasterUnpremultiply(surface->buf32 + surface->stride * uint32_t(y), surface->w);
+#pragma omp parallel for
+    for (int32_t row = 0; row < int32_t(h); ++row) {
+        rasterUnpremultiply(surface->buf32 + surface->stride * (y + uint32_t(row)) + x, w);
     }
+}
+
+void rasterUnpremultiplySurface(RenderSurface* surface)
+{
+    rasterUnpremultiplySurface(surface, 0, 0, surface->w, surface->h);
     surface->premultiplied = false;
 }
 

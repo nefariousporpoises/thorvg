@@ -546,6 +546,7 @@ bool rasterGradientShape(SwSurface* surface, SwShape* shape, const RenderRegion&
 bool rasterGradientStroke(SwSurface* surface, SwShape* shape, const RenderRegion& bbox, const Fill* fdata, uint8_t opacity);
 bool rasterClear(SwSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 void rasterUnpremultiplySurface(RenderSurface* surface);
+void rasterUnpremultiplySurface(RenderSurface* surface, uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 void rasterPremultiplySurface(RenderSurface* surface);
 bool rasterConvertCS(RenderSurface* surface, ColorSpace to);
 
