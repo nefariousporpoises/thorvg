@@ -312,8 +312,8 @@ struct SceneImpl : Scene
         auto itr = paints.begin();
         while (itr != paints.end()) {
             auto paint = PAINT((*itr));
-            //when the paint is destroyed damage will be triggered
-            if (paint->refCnt > 1 && partialDmg) paint->damage();
+            //destroyed paints are damaged too: see SceneImpl::remove (issue #517)
+            if (partialDmg) paint->damage();
             paint->unref();
             paints.erase(itr++);
         }
@@ -326,8 +326,10 @@ struct SceneImpl : Scene
     Result remove(Paint* paint)
     {
         if (PAINT(paint)->parent != this) return Result::InsufficientCondition;
-        //when the paint is destroyed damage will be triggered
-        if (PAINT(paint)->refCnt > 1) PAINT(paint)->damage();
+        //THE OLD AREA IS DAMAGED WHETHER OR NOT THE PAINT SURVIVES. Destroying a paint only disposes its render task;
+        //nothing damages the area it covered, so the renderer would never clear it (see issue #517). A paint that stays
+        //alive through another reference was the only case this line used to cover.
+        PAINT(paint)->damage();
         PAINT(paint)->unref();
         paints.remove(paint);
         return Result::Success;
