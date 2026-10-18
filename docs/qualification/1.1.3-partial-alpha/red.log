@@ -1,0 +1,35 @@
+Filters: [partial-alpha]
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tvgUnitTests is a Catch v2.13.10 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+Partial alpha stays equal to a fresh render
+-------------------------------------------------------------------------------
+../test/testPartialAlpha.cpp:43
+...............................................................................
+
+../test/testPartialAlpha.cpp:92: FAILED:
+  REQUIRE( equal )
+with expansion:
+  false
+with messages:
+  frame := 1
+  int(cs) := 2
+  threads := 0
+
+Catch will terminate because it needed to throw an exception.
+The message was: Test failure requires aborting test!
+libc++abi: terminating
+../test/testPartialAlpha.cpp:92: FAILED:
+  {Unknown expression after the reported line}
+due to a fatal error condition:
+  frame := 1
+  int(cs) := 2
+  threads := 0
+  SIGABRT - Abort (abnormal termination) signal
+
+===============================================================================
+test cases:     1 |     0 passed | 1 failed
+assertions: 32889 | 32887 passed | 2 failed
