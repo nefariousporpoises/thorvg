@@ -170,12 +170,22 @@ struct SceneImpl : Scene
 
         //Merge regions
         RenderRegion pRegion = {INT32_MAX, INT32_MAX, 0, 0};
+        auto merged = false;
         for (auto paint : paints) {
+            //Never-updated paints cover no pixels: leave them out of the union.
+            if (!paint->pImpl->renderer) continue;
+            merged = true;
             auto region = paint->pImpl->bounds();
             if (region.xMin < pRegion.xMin) pRegion.xMin = region.xMin;
             if (pRegion.xMax < region.xMax) pRegion.xMax = region.xMax;
             if (region.yMin < pRegion.yMin) pRegion.yMin = region.yMin;
             if (pRegion.yMax < region.yMax) pRegion.yMax = region.yMax;
+        }
+
+        //No updated paint to bound: keep the cache stale so the next query recomputes.
+        if (!merged) {
+            vdirty = true;
+            return {};
         }
 
         //Extends the render region if post effects require
