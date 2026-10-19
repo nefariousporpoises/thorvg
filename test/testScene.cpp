@@ -406,5 +406,54 @@ TEST_CASE("Removing a never-updated paint directly leaves a drawn scene untouche
     }
     REQUIRE(Initializer::term() == Result::Success);
 }
+
+//A drawn scene whose only drawn child is removed and which then receives only never-updated paints: none of its children
+//can be bounded, so its bounds are empty. Removing it damages nothing, and the earlier removal's damage is unaffected.
+TEST_CASE("Removing a scene whose remaining children were all never updated", "[tvgScene][partial]")
+{
+    REQUIRE(Initializer::init(0) == Result::Success);
+    {
+        vector<uint32_t> target(UW * UH, 0);
+        auto canvas = SwCanvas::gen(EngineOption::SmartRender);
+        REQUIRE(canvas->target(target.data(), UW, UW, UH, ColorSpace::ABGR8888) == Result::Success);
+        auto scene = Scene::gen();
+        auto drawn = disc(48, 34, 13, 60, 90, 230, 120);
+        REQUIRE(scene->add(drawn) == Result::Success);
+        REQUIRE(canvas->add(disc(30, 30, 13, 220, 60, 60, 150)) == Result::Success);
+        REQUIRE(canvas->add(scene) == Result::Success);
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw(false) == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        //the scene's bounds were never queried since its update, so they are still pending
+        REQUIRE(scene->remove(drawn) == Result::Success);
+        auto inner = Scene::gen();
+        REQUIRE(inner->add(disc(15, 12, 8, 10, 10, 10, 255)) == Result::Success);
+        REQUIRE(scene->add(disc(15, 12, 8, 10, 10, 10, 255)) == Result::Success);
+        REQUIRE(scene->add(inner) == Result::Success);
+        REQUIRE(canvas->remove(scene) == Result::Success);
+        REQUIRE(canvas->add(disc(20, 50, 9, 240, 200, 40, 200)) == Result::Success);
+
+        REQUIRE(canvas->update() == Result::Success);
+        REQUIRE(canvas->draw(false) == Result::Success);
+        auto count = canvas->dirtyRegions();
+        vector<Region> regions(count);
+        REQUIRE(count > 0);
+        REQUIRE(canvas->dirtyRegions(regions.data(), count) == Result::Success);
+        REQUIRE(canvas->sync() == Result::Success);
+
+        REQUIRE(covered(regions, 48, 34));    //the removed disc's old area
+        REQUIRE(!covered(regions, 15, 12));   //the undrawn paints' would-be area
+        for (auto& r : regions) {             //no unbounded region from an empty union
+            REQUIRE(r.xMin >= 0);
+            REQUIRE(r.yMin >= 0);
+            REQUIRE(r.xMax <= int32_t(UW));
+            REQUIRE(r.yMax <= int32_t(UH));
+        }
+        REQUIRE(target == freshDiscs(true));
+        delete canvas;
+    }
+    REQUIRE(Initializer::term() == Result::Success);
+}
 #endif
 #endif
